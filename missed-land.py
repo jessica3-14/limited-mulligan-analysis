@@ -69,13 +69,18 @@ def calculate_set_win_rate(directory='.'):
     "candidate_hand_5",
     "candidate_hand_6",
     "candidate_hand_7",
-    "game_number"
+    "game_number",
+    "user_turn_3_eot_user_lands_in_play",
+    "user_turn_4_eot_user_lands_in_play",
+    "user_turn_5_eot_user_lands_in_play"
     ]
     dtypes = {"on_play":int,
     "num_mulligans":int,
     "opp_num_mulligans":int,
     "won":int, "candidate_hand_1": str,"candidate_hand_2": str,"candidate_hand_3": str,"candidate_hand_4": 
-              str,"candidate_hand_5": str,"candidate_hand_6": str,"candidate_hand_7": str, "game_number": int}
+              str,"candidate_hand_5": str,"candidate_hand_6": str,"candidate_hand_7": str, "game_number": int,"user_turn_3_eot_user_lands_in_play":str,
+              "user_turn_4_eot_user_lands_in_play":str,
+              "user_turn_5_eot_user_lands_in_play":str}
     all_files = glob.glob(os.path.join(directory, "*.csv"))
     
     if not all_files:
@@ -155,140 +160,52 @@ def calculate_set_win_rate(directory='.'):
    
     combined_df = pd.concat(df_list, ignore_index=True)
     df=combined_df
-
-    #TODO total wr fix?
     
     mean_wr = df['won'].mean()
     print("mean wr: "+str(mean_wr))
     rescaling_wr = 0.5/mean_wr
+    df["won"] = df["won"] * rescaling_wr
     
-    mull_df = df[df['num_mulligans'] > 0]
-    
-    play_draw_mull_winrate = mull_df.groupby("on_play")['won'].mean()*rescaling_wr
+    df_sub = df[
+    (df["candidate_hand_1_lands"] == 2) &
+    (df["num_mulligans"] == 0)
+    ].copy()
 
-    keep_df = df[(df['num_mulligans'] == 0) & (df['candidate_hand_1_lands'] < 6) & (df['candidate_hand_1_lands'] < 1)]
-    
-    total_keep_winrate = keep_df.groupby("on_play")['won'].mean()*rescaling_wr
-
-    total_draw_mullrate = len(df[(df['num_mulligans'] > 0) & (df['on_play']==0)])/len(df[df['on_play']==0])
-    total_play_mullrate = len(df[(df['num_mulligans'] > 0) & (df['on_play']==1)])/len(df[df['on_play']==1])
-    print('Total mullrate on draw: '+str(total_draw_mullrate))
-    print('Total mullrate on play: '+str(total_play_mullrate))
-    
-    print(f"play draw mull winrate: {play_draw_mull_winrate}")
-    print(f"play draw keep winrate: {total_keep_winrate}")
-
-    mulligan_stats = (
-            df.groupby(["on_play", "candidate_hand_1_lands"])
-            .agg(
-            games=("num_mulligans", "size"),
-            mulligans=("num_mulligans", lambda x: (x > 0).sum())
-            )
-            .reset_index()
-            )
-
-    mulligan_stats["mulligan_rate"] = mulligan_stats["mulligans"] / mulligan_stats["games"]
-
-    mulligan_stats["play_draw"] = mulligan_stats["on_play"].map({1: "Play", 0: "Draw"})
-
-    mulligan_stats = mulligan_stats.sort_values(
-            ["play_draw", "candidate_hand_1_lands"]
-            )
-    
-
-    winrate_lands = (
-                df[df["num_mulligans"] == 0].groupby("candidate_hand_1_lands")
-                .agg(
-                games=("won","size"),
-                winrate=("won","mean")
-                )
-            )
-    winrate_lands["winrate"] *= rescaling_wr
-    playdraw_winrate = (
-            df[df["num_mulligans"] == 0].groupby(["on_play","candidate_hand_1_lands"])
-            .agg(
-            games=("won","size"),
-            winrate=("won","mean")
-            )
-            .reset_index()
-            )   
-    playdraw_winrate["play_draw"] = playdraw_winrate["on_play"].map({1:"Play",0:"Draw"})
-    playdraw_winrate["winrate"] *= rescaling_wr
-    
-    decision_stats = (
-            df.groupby(["on_play", "candidate_hand_1_lands", "kept_7"])
-            .agg(
-            games=("won", "size"),
-            winrate=("won", "mean")
-            )
-            .reset_index()
-            )
-
-    decision_table = decision_stats.pivot_table(
-            index=["on_play", "candidate_hand_1_lands"],
-            columns="kept_7",
-            values="winrate"
-            ).reset_index()
-
-    decision_table = decision_table.rename(columns={
-            0: "winrate_if_mulligan",
-            1: "winrate_if_keep"
-            })
-    
-    decision_table["winrate_if_keep"] *= rescaling_wr
-    decision_table["winrate_if_mulligan"] *= rescaling_wr
-    
-    decision_table["keep_advantage"] = (
-    decision_table["winrate_if_keep"] -
-    decision_table["winrate_if_mulligan"]
-        )
-
-    decision_table["play_draw"] = decision_table["on_play"].map({1: "Play", 0: "Draw"})
-
-    decision_table = decision_table.sort_values(
-            ["play_draw", "candidate_hand_1_lands"]
-        )
-    
-
-    stats = playdraw_winrate.merge(
-    mulligan_stats[["on_play", "candidate_hand_1_lands", "mulligan_rate"]],
-    on=["on_play", "candidate_hand_1_lands"]
+    df_sub["lands_t3"] = (
+    df_sub["user_turn_3_eot_user_lands_in_play"]
+    .fillna("")
+    .apply(lambda x: len(x.split("|")) if x else 0)
     )
-    
-    stats['cutoff'] = stats['on_play'].map(play_draw_mull_winrate)
-
-    
-    print(f"stats: {stats}")
-    
-    stats[["mean", "stddev"]] = stats.apply(
-    lambda r: gaussian_from_trunc(
-        r["cutoff"],
-        r["winrate"],
-        r["mulligan_rate"]
-    ),
-    axis=1,
-    result_type="expand"
+    df_sub["lands_t4"] = (
+    df_sub["user_turn_4_eot_user_lands_in_play"]
+    .fillna("")
+    .apply(lambda x: len(x.split("|")) if x else 0)
+    )
+    df_sub["lands_t5"] = (
+    df_sub["user_turn_5_eot_user_lands_in_play"]
+    .fillna("")
+    .apply(lambda x: len(x.split("|")) if x else 0)
     )
 
-    table = stats.pivot(
-    index="candidate_hand_1_lands",
-    columns="on_play",
-    values=["mean", "stddev"]
+
+    df_sub["turn_hit_land"] = np.select(
+    [
+        df_sub["lands_t3"] >= 3,
+        df_sub["lands_t4"] >= 3,
+        df_sub["lands_t5"] >= 3,
+    ],
+    [3, 4, 5],
+    default=6  # never reached by turn 5
     )
 
-    print(f"table: {table}")
+    result = (
+    df_sub
+    .groupby(["on_play", "turn_hit_land"])["won"]
+    .mean()
+    .reset_index()
+    )
 
-    print(f"winrate lands: {winrate_lands}")
-    print(f"playdraw winrate: {playdraw_winrate}")
-    print(f"mulligan stats: {mulligan_stats}")
-    print(f"decision table: {decision_table}")
-           
-
-    plt.plot(winrate_lands.index, winrate_lands["winrate"])
-    plt.xlabel("number of lands")
-    plt.ylabel("Winrate")
-    plt.title("Winrate of kept 7s by number of lands")
-    plt.show()
+    print(result)
 
     return
     
