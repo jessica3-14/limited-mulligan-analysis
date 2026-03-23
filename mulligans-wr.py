@@ -30,26 +30,6 @@ def gaussian_from_trunc(cutoff, kept_wr, emp_mull_rate):
     
     return mu, sigma
 
-def get_card_list(search_query):
-    next_page = f"https://api.scryfall.com/cards/search?q={search_query}"
-    
-    retval = []
-    card_list=[]
-    while next_page:
-        cards = loads(get(next_page).text)
-        next_page = cards.get('next_page')
-        if('data' not in cards):
-            continue
-        card_list += cards['data']
-        time.sleep(0.1)
-    for card in card_list:
-        retval.append(card['name'])
-    
-    
-
-    return retval
-
-
 
 
 def calculate_set_win_rate(directory='.'):
@@ -91,13 +71,8 @@ def calculate_set_win_rate(directory='.'):
     df = pd.read_csv("./other/cards.csv")
 
 
-    #correction for mh3 mdfcs - still broken
+    #mh3 excluded for mdfcs
     set_names = ['eoe', 'eos', 'tdm','dft','mh3', 'fdn','blb','otj','otp','big','ktk','woe','wot','sir','sis','dmu','fin','fca','dsk','mkm','lci','ltr','mom']
-    #cycler sets: fin/fca, dsk, mkm(just one common),lci,ltr,mom
-    #sets missing cols: afr and stx
-    land_names=[]
-    for set_key in set_names:
-        land_names.append(get_card_list(search_query="t:land set:"+set_key))
 
     
 
@@ -107,13 +82,6 @@ def calculate_set_win_rate(directory='.'):
     .astype(int)
     .to_dict()
     )
-
-    ids_to_mark = df.loc[df["name"].isin(land_names), "id"]
-    #print(len(ids_to_mark))
-
-    for card_id in ids_to_mark:
-        id_marked[card_id] = 1
-
 
 
     df_list=[]

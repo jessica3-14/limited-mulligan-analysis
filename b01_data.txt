@@ -1,0 +1,163 @@
+✅ Found 16 CSV files. Combining data...
+Total rows changed: 14081
+Percent of rows changed: 1.20%
+[]
+finished ./b01_replays/replay_data_public.OTJ.PremierDraft.csv
+Total rows changed: 0
+Percent of rows changed: 0.00%
+[]
+finished ./b01_replays/replay_data_public.DFT.PremierDraft.csv
+Total rows changed: 9027
+Percent of rows changed: 0.97%
+[]
+finished ./b01_replays/replay_data_public.BLB.PremierDraft.csv
+Total rows changed: 12640
+Percent of rows changed: 1.60%
+[]
+finished ./b01_replays/replay_data_public.FDN.PremierDraft.csv
+Total rows changed: 47491
+Percent of rows changed: 3.81%
+[nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
+finished ./b01_replays/replay_data_public.MOM.PremierDraft.csv
+Total rows changed: 18156
+Percent of rows changed: 3.22%
+['96750|96818|96678|96769|96669|96674|96763']
+finished ./b01_replays/replay_data_public.EOE.PremierDraft.csv
+Total rows changed: 88402
+Percent of rows changed: 9.02%
+[nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, '84873|84845|84882|84856|84803|84856|84856', nan, nan, nan, nan, '84839|84840|84751|84748|84874|84726|84823']
+finished ./b01_replays/replay_data_public.LTR.PremierDraft.csv
+Total rows changed: 31892
+Percent of rows changed: 4.14%
+[]
+finished ./b01_replays/replay_data_public.FIN.PremierDraft.csv
+Total rows changed: 36431
+Percent of rows changed: 3.60%
+['92280|92259|92295|92226|92234|92283|92231']
+finished ./b01_replays/replay_data_public.DSK.PremierDraft.csv
+Total rows changed: 16206
+Percent of rows changed: 1.70%
+[]
+finished ./b01_replays/replay_data_public.MKM.PremierDraft.csv
+Total rows changed: 39268
+Percent of rows changed: 4.77%
+[]
+finished ./b01_replays/replay_data_public.LCI.PremierDraft.csv
+Total rows changed: 1962
+Percent of rows changed: 0.21%
+[nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
+finished ./b01_replays/replay_data_public.DMU.PremierDraft.csv
+Total rows changed: 15791
+Percent of rows changed: 1.54%
+[]
+finished ./b01_replays/replay_data_public.WOE.PremierDraft.csv
+Total rows changed: 0
+Percent of rows changed: 0.00%
+[]
+finished ./b01_replays/replay_data_public.KTK.PremierDraft.csv
+Total rows changed: 320
+Percent of rows changed: 0.11%
+[nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
+finished ./b01_replays/replay_data_public.SIR.PremierDraft.csv
+Total rows changed: 26239
+Percent of rows changed: 4.75%
+[]
+finished ./b01_replays/replay_data_public.TDM.PremierDraft.csv
+mean wr: 0.5501269074205111
+Total mullrate on draw: 0.10988093371804816
+Total mullrate on play: 0.10925576030651538
+play draw mull winrate: on_play
+0    0.360619
+1    0.387516
+Name: won, dtype: float64
+play draw keep winrate: on_play
+0    0.490726
+1    0.540421
+Name: won, dtype: float64
+stats:     on_play  candidate_hand_1_lands    games  ...  play_draw mulligan_rate    cutoff
+0         0                       0       38  ...       Draw      0.759494  0.360619
+1         0                       1     7062  ...       Draw      0.836634  0.360619
+2         0                       2  1244114  ...       Draw      0.176836  0.360619
+3         0                       3  3520275  ...       Draw      0.079169  0.360619
+4         0                       4  1056774  ...       Draw      0.093318  0.360619
+5         0                       5    14305  ...       Draw      0.303384  0.360619
+6         0                       6       16  ...       Draw      0.659574  0.360619
+7         1                       0       42  ...       Play      0.710345  0.387516
+8         1                       1     4668  ...       Play      0.890638  0.387516
+9         1                       2  1210073  ...       Play      0.198506  0.387516
+10        1                       3  3542249  ...       Play      0.073650  0.387516
+11        1                       4  1073367  ...       Play      0.078864  0.387516
+12        1                       5    14896  ...       Play      0.272088  0.387516
+13        1                       6       19  ...       Play      0.739726  0.387516
+
+[14 rows x 7 columns]
+table:                             mean              stddev          
+on_play                        0         1         0         1
+candidate_hand_1_lands                                        
+0                       0.076868  0.194313  0.402670  0.348494
+1                       0.236550  0.253589  0.126509  0.108890
+2                       0.449986  0.472533  0.096353  0.100378
+3                       0.487687  0.541318  0.090075  0.106134
+4                       0.453372  0.509578  0.070235  0.086400
+5                       0.377903  0.412623  0.033581  0.041396
+6                       0.407954  0.392649 -0.115085 -0.007989
+winrate lands:                           games   winrate
+candidate_hand_1_lands                   
+0                            80  0.602134
+1                         11730  0.432513
+2                       2454187  0.493710
+3                       7062524  0.529800
+4                       2130141  0.495055
+5                         29201  0.413496
+6                            35  0.337584
+playdraw winrate:     on_play  candidate_hand_1_lands    games   winrate play_draw
+0         0                       0       38  0.597948      Draw
+1         0                       1     7062  0.427542      Draw
+2         0                       2  1244114  0.480359      Draw
+3         0                       3  3520275  0.502115      Draw
+4         0                       4  1056774  0.466293      Draw
+5         0                       5    14305  0.394749      Draw
+6         0                       6       16  0.284025      Draw
+7         1                       0       42  0.605921      Play
+8         1                       1     4668  0.440032      Play
+9         1                       2  1210073  0.507437      Play
+10        1                       3  3542249  0.557313      Play
+11        1                       4  1073367  0.523372      Play
+12        1                       5    14896  0.431499      Play
+13        1                       6       19  0.382687      Play
+mulligan stats:     on_play  candidate_hand_1_lands  ...  mulligan_rate  play_draw
+0         0                       0  ...       0.759494       Draw
+1         0                       1  ...       0.836634       Draw
+2         0                       2  ...       0.176836       Draw
+3         0                       3  ...       0.079169       Draw
+4         0                       4  ...       0.093318       Draw
+5         0                       5  ...       0.303384       Draw
+6         0                       6  ...       0.659574       Draw
+7         0                       7  ...       1.000000       Draw
+8         1                       0  ...       0.710345       Play
+9         1                       1  ...       0.890638       Play
+10        1                       2  ...       0.198506       Play
+11        1                       3  ...       0.073650       Play
+12        1                       4  ...       0.078864       Play
+13        1                       5  ...       0.272088       Play
+14        1                       6  ...       0.739726       Play
+
+[15 rows x 6 columns]
+decision table: kept_7  on_play  candidate_hand_1_lands  ...  keep_advantage  play_draw
+0             0                       0  ...        0.241970       Draw
+1             0                       1  ...        0.060683       Draw
+2             0                       2  ...        0.118872       Draw
+3             0                       3  ...        0.142963       Draw
+4             0                       4  ...        0.105552       Draw
+5             0                       5  ...        0.038199       Draw
+6             0                       6  ...       -0.067800       Draw
+7             0                       7  ...             NaN       Draw
+8             1                       0  ...        0.305902       Play
+9             1                       1  ...        0.045481       Play
+10            1                       2  ...        0.117730       Play
+11            1                       3  ...        0.172514       Play
+12            1                       4  ...        0.137974       Play
+13            1                       5  ...        0.036312       Play
+14            1                       6  ...       -0.038092       Play
+
+[15 rows x 6 columns]

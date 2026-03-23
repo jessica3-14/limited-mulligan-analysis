@@ -97,7 +97,7 @@ def calculate_set_win_rate(directory='.'):
     #set_names = ['eoe', 'eos', 'tdm','dft', 'fdn','blb','otj','otp','big','ktk','woe','wot','sir','sis','dmu','scn']
     #cycler sets: fin/fca, dsk, mkm(just one common),lci,ltr,mom
     #sets missing cols: afr and stx
-    land_names=(get_card_list(search_query="t:land set:mh3"))
+    #land_names=(get_card_list(search_query="t:land set:mh3"))
 
     id_marked = (
     df.set_index("id")["types"]
@@ -106,14 +106,26 @@ def calculate_set_win_rate(directory='.'):
     .to_dict()
     )
 
-    ids_to_mark = df.loc[df["name"].isin(land_names), "id"]
+    #ids_to_mark = df.loc[df["name"].isin(land_names), "id"]
 
-    for card_id in ids_to_mark:
-        id_marked[card_id] = 1
+    #for card_id in ids_to_mark:
+    #    id_marked[card_id] = 1
 
 
 
     df_list=[]
+
+    third_df = pd.read_csv("lands.csv")
+
+# Convert the 'name' column to a list
+    third_lands = third_df["name"].dropna()
+
+
+    names_set = set(third_lands)  # faster lookup
+
+    ids = df.loc[df["name"].isin(names_set), "id"].tolist()
+
+    third_land_cards = set(ids)
     
     
     for filename in all_files:
@@ -132,6 +144,25 @@ def calculate_set_win_rate(directory='.'):
                 lands = cards.stack().map(id_marked).unstack().fillna(0)
 
                 df[col + "_lands"] = lands.sum(axis=1).astype("int8")
+                if(col=="candidate_hand_1"):
+                    has_third_land = cards.isin(third_land_cards).any(axis=1)
+                    is_two_lands = df[col + "_lands"] == 2
+
+                    mask = is_two_lands & has_third_land
+
+    # Count changes
+                    total_changed =0
+                    changed_count = mask.sum()
+                    total_changed += changed_count
+
+    # Apply update
+                    total_rows = len(df['candidate_hand_1_lands']==2)
+                    df.loc[mask, col + "_lands"] = 3
+                    
+                    percent_changed = (total_changed / total_rows) * 100
+
+                    print(f"Total rows changed: {total_changed}")
+                    print(f"Percent of rows changed: {percent_changed:.2f}%")
             
             land_cols = [f"{c}_lands" for c in hand_cols]
 
@@ -205,7 +236,15 @@ def calculate_set_win_rate(directory='.'):
     .reset_index()
     )
 
+    result2 = (
+    df_sub
+    .groupby(["on_play", df_sub["lands_t3"] >= 3])["won"]
+    .mean()
+    .reset_index()
+    )
+
     print(result)
+    print(result2)
 
     return
     
@@ -213,6 +252,6 @@ def calculate_set_win_rate(directory='.'):
 
 # --- Execution ---
 if __name__ == '__main__':
-    calculate_set_win_rate(directory='./b01_replays/') 
+    calculate_set_win_rate(directory='./trad_replays/') 
     
     
