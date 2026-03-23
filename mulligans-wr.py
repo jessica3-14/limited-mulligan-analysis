@@ -33,18 +33,21 @@ def gaussian_from_trunc(cutoff, kept_wr, emp_mull_rate):
 def get_card_list(search_query):
     next_page = f"https://api.scryfall.com/cards/search?q={search_query}"
     
-    card_list = []
+    retval = []
+    card_list=[]
     while next_page:
         cards = loads(get(next_page).text)
         next_page = cards.get('next_page')
         if('data' not in cards):
             continue
         card_list += cards['data']
-        time.sleep(0.2)
-    card_list = [card['name'] for card in card_list]
+        time.sleep(0.1)
+    for card in card_list:
+        retval.append(card['name'])
+    
     
 
-    return card_list
+    return retval
 
 
 
@@ -89,10 +92,14 @@ def calculate_set_win_rate(directory='.'):
 
 
     #correction for mh3 mdfcs - still broken
-    #set_names = ['eoe', 'eos', 'tdm','dft', 'fdn','blb','otj','otp','big','ktk','woe','wot','sir','sis','dmu','scn']
+    set_names = ['eoe', 'eos', 'tdm','dft','mh3', 'fdn','blb','otj','otp','big','ktk','woe','wot','sir','sis','dmu','fin','fca','dsk','mkm','lci','ltr','mom']
     #cycler sets: fin/fca, dsk, mkm(just one common),lci,ltr,mom
     #sets missing cols: afr and stx
-    land_names=(get_card_list(search_query="t:land set:mh3"))
+    land_names=[]
+    for set_key in set_names:
+        land_names.append(get_card_list(search_query="t:land set:"+set_key))
+
+    
 
     id_marked = (
     df.set_index("id")["types"]
@@ -102,6 +109,7 @@ def calculate_set_win_rate(directory='.'):
     )
 
     ids_to_mark = df.loc[df["name"].isin(land_names), "id"]
+    #print(len(ids_to_mark))
 
     for card_id in ids_to_mark:
         id_marked[card_id] = 1
@@ -109,6 +117,20 @@ def calculate_set_win_rate(directory='.'):
 
 
     df_list=[]
+
+    third_df = pd.read_csv("lands.csv")
+
+# Convert the 'name' column to a list
+    third_lands = third_df["name"].dropna()
+
+
+    names_set = set(third_lands)  # faster lookup
+
+    ids = df.loc[df["name"].isin(names_set), "id"].tolist()
+
+    third_land_cards = set(ids)
+
+    
     
     
     for filename in all_files:
@@ -128,6 +150,28 @@ def calculate_set_win_rate(directory='.'):
 
                 df[col + "_lands"] = lands.sum(axis=1).astype("int8")
             
+            
+
+                if(col=="candidate_hand_1"):
+                    has_third_land = cards.isin(third_land_cards).any(axis=1)
+                    is_two_lands = df[col + "_lands"] == 2
+
+                    mask = is_two_lands & has_third_land
+
+    # Count changes
+                    total_changed =0
+                    changed_count = mask.sum()
+                    total_changed += changed_count
+
+    # Apply update
+                    total_rows = len(df['candidate_hand_1_lands']==2)
+                    df.loc[mask, col + "_lands"] = 3
+                    
+                    percent_changed = (total_changed / total_rows) * 100
+
+                    print(f"Total rows changed: {total_changed}")
+                    print(f"Percent of rows changed: {percent_changed:.2f}%")
+
             land_cols = [f"{c}_lands" for c in hand_cols]
 
             land_array = df[land_cols].to_numpy()
@@ -137,7 +181,7 @@ def calculate_set_win_rate(directory='.'):
             df["kept_lands"] = land_array[np.arange(len(df)), kept_index]
             df["hand1_lands"] = df["candidate_hand_1_lands"]
 
-            
+            lands_2 = df[df["candidate_hand_1_lands"] == 2]
 
             df["kept_7"] = (df["num_mulligans"] == 0).astype(int)
 
@@ -156,7 +200,7 @@ def calculate_set_win_rate(directory='.'):
     combined_df = pd.concat(df_list, ignore_index=True)
     df=combined_df
 
-    #TODO total wr fix?
+    #TODO total wr fix to 2-5 lands?
     
     mean_wr = df['won'].mean()
     print("mean wr: "+str(mean_wr))
@@ -166,7 +210,7 @@ def calculate_set_win_rate(directory='.'):
     
     play_draw_mull_winrate = mull_df.groupby("on_play")['won'].mean()*rescaling_wr
 
-    keep_df = df[(df['num_mulligans'] == 0) & (df['candidate_hand_1_lands'] < 6) & (df['candidate_hand_1_lands'] < 1)]
+    keep_df = df[(df['num_mulligans'] == 0) & (df['candidate_hand_1_lands'] < 6) & (df['candidate_hand_1_lands'] > 1)]
     
     total_keep_winrate = keep_df.groupby("on_play")['won'].mean()*rescaling_wr
 
@@ -296,6 +340,6 @@ def calculate_set_win_rate(directory='.'):
 
 # --- Execution ---
 if __name__ == '__main__':
-    calculate_set_win_rate(directory='./b01_replays/') 
+    calculate_set_win_rate(directory='./trad_replays/') 
     
     
