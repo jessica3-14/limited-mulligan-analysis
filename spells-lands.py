@@ -77,7 +77,10 @@ def calculate_set_win_rate(directory='.'):
     "user_turn_2_cards_drawn",
     "user_turn_3_cards_drawn",
     "user_turn_4_cards_drawn",
-    "user_turn_5_cards_drawn"
+    "user_turn_5_cards_drawn",
+    "user_turn_6_cards_drawn",
+    "user_turn_7_cards_drawn",
+    "user_turn_8_cards_drawn"
     ]
     dtypes = {"on_play":int,
     "num_mulligans":int,
@@ -89,7 +92,10 @@ def calculate_set_win_rate(directory='.'):
     "user_turn_2_cards_drawn":str,
     "user_turn_3_cards_drawn":str,
     "user_turn_4_cards_drawn":str,
-    "user_turn_5_cards_drawn":str}
+    "user_turn_5_cards_drawn":str,
+    "user_turn_6_cards_drawn":str,
+    "user_turn_7_cards_drawn":str,
+    "user_turn_8_cards_drawn":str}
     all_files = glob.glob(os.path.join(directory, "*.csv"))
     
     if not all_files:
@@ -146,7 +152,7 @@ def calculate_set_win_rate(directory='.'):
             
             hand_cols = [f"candidate_hand_{i}" for i in range(1,8)]
 
-            drawn_cols = [f"user_turn_{i}_cards_drawn" for i in range(1,6)]
+            drawn_cols = [f"user_turn_{i}_cards_drawn" for i in range(1,9)]
 
             for col in hand_cols:
 
@@ -162,7 +168,22 @@ def calculate_set_win_rate(directory='.'):
 
                 lands = cards.stack().map(id_marked).unstack().fillna(0) 
 
+                
+                spells = (
+                df[col].str.split("|", expand=True).astype(float).fillna(66499).astype(int).stack()
+                .map(lambda x: not id_marked.get(x, False))
+                .unstack()
+                .fillna(0)
+                .astype(int)
+                )
+                
+        
+
                 df[col+ "_lands"] = lands.sum(axis=1).astype("int8")
+
+                df[col+ "_spells"] = spells.sum(axis=1).astype("int8")
+                
+
             
             land_cols = [f"{c}_lands" for c in hand_cols]
 
@@ -177,14 +198,16 @@ def calculate_set_win_rate(directory='.'):
 
             df["kept_7"] = (df["num_mulligans"] == 0).astype(int)
 
-            print(df.loc[(df["candidate_hand_1_lands"] == 0) & (df["kept_7"] == 1), "candidate_hand_1"].to_list())
-
             df["turn_1_lands"] = df["kept_lands"]+df["user_turn_1_cards_drawn_lands"]
-            for i in range(2,6):
+            df["turn_1_spells"] = 7-df["kept_lands"]+df["user_turn_1_cards_drawn_spells"]
+            for i in range(2,9):
                 df["turn_"+str(i)+"_lands"]=df["turn_"+str(i-1)+"_lands"]+df["user_turn_"+str(i)+"_cards_drawn_lands"]
+                df["turn_"+str(i)+"_spells"]=df["turn_"+str(i-1)+"_spells"]+df["user_turn_"+str(i)+"_cards_drawn_spells"]
+            for i in range(3,9):
+                df["turn_"+str(i)+"_flood"]=df["turn_"+str(i)+"_lands"]/(df["turn_"+str(i)+"_spells"]+df["turn_"+str(i)+"_lands"])
 
             df_list.append(df)
-            print(df["turn_5_lands"][0:20])
+            
 
             print("finished "+filename)
 
@@ -250,33 +273,62 @@ def calculate_set_win_rate(directory='.'):
 
     t3_lands = (
     df
-    .groupby(["on_play", df_sub["turn_3_lands"]])["won"]
+    .groupby(["on_play", df["turn_3_lands"]])["won"]
     .mean()
     .reset_index()
     )
 
     t4_lands = (
     df
-    .groupby(["on_play", df_sub["turn_4_lands"]])["won"]
+    .groupby(["on_play", df["turn_4_lands"]])["won"]
     .mean()
     .reset_index()
     )
 
     t5_lands = (
     df
-    .groupby(["on_play", df_sub["turn_5_lands"]])["won"]
+    .groupby(["on_play", df["turn_5_lands"]])["won"]
     .mean()
     .reset_index()
     )
 
-    counts = df["turn_5_lands"].value_counts()
+    bins = np.arange(0, 1.05, 0.05)  # 0%, 5%, ..., 100%
+
+    t4_flood = (
+    df
+    .assign(bin=pd.cut(df["turn_4_flood"], bins=bins, include_lowest=True))
+    .groupby(["on_play", "bin"])["won"]
+    .mean()
+    .reset_index()
+    )
+
+    t6_flood = (
+    df
+    .assign(bin=pd.cut(df["turn_6_flood"], bins=bins, include_lowest=True))
+    .groupby(["on_play", "bin"])["won"]
+    .mean()
+    .reset_index()
+    )
+
+    t8_flood = (
+    df
+    .assign(bin=pd.cut(df["turn_8_flood"], bins=bins, include_lowest=True))
+    .groupby(["on_play", "bin"])["won"]
+    .mean()
+    .reset_index()
+    )
+    
+
+    
 
     print(result)
     print(result2)
     print(t3_lands)
     print(t4_lands)
     print(t5_lands)
-    print(counts)
+    print(t4_flood)
+    print(t6_flood)
+    print(t8_flood)
 
     return
     
