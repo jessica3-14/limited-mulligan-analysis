@@ -16,6 +16,54 @@ import time
 import math
 import os
 
+def plot_ideal_vs_actual_mulligan(regression_df):
+    """
+    Plots the average mulligan rate vs the 'ideal' (predicted high-skill) 
+    mulligan rate across different land counts, split by Play/Draw.
+    """
+    import matplotlib.pyplot as plt
+    
+    # 1. Setup Plot
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6), sharey=True)
+    
+    # Define colors and scenarios
+    scenarios = [
+        {'on_play': 1, 'ax': ax1, 'title': 'On the Play', 'color_avg': '#377eb8', 'color_ideal': '#a6cee3'},
+        {'on_play': 0, 'ax': ax2, 'title': 'On the Draw', 'color_avg': '#ff7f00', 'color_ideal': '#fdbf6f'}
+    ]
+
+    for sc in scenarios:
+        subset = regression_df[regression_df['on_play'] == sc['on_play']].sort_values('lands')
+        ax = sc['ax']
+        
+        # Plot Actual Average Mulligan Rate
+        ax.plot(subset['lands'], subset['avg_mull_rate'], 
+                marker='o', linestyle='-', linewidth=3, 
+                color=sc['color_avg'], label='Actual Avg (All Players)')
+        
+        # Plot Ideal (Predicted 70% WR) Mulligan Rate
+        ax.plot(subset['lands'], subset['predicted_70'], 
+                marker='s', linestyle='--', linewidth=2, 
+                color=sc['color_ideal'], label='Ideal (Predicted 70% WR)')
+        
+        # Fill the "Efficiency Gap"
+        ax.fill_between(subset['lands'], subset['avg_mull_rate'], subset['predicted_70'], 
+                        color=sc['color_avg'], alpha=0.1, label='Skill Gap')
+
+        # Formatting
+        ax.set_title(sc['title'], fontsize=14, fontweight='bold')
+        ax.set_xlabel('Number of Lands in Opening Hand', fontsize=12)
+        ax.set_xticks(subset['lands'].unique())
+        ax.grid(True, alpha=0.3, linestyle=':')
+        ax.legend()
+
+    ax1.set_ylabel('Mulligan Rate', fontsize=12)
+    plt.suptitle('Actual vs. Ideal Mulligan Decisions by Land Count', fontsize=16)
+    
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    plt.savefig("ideal_vs_actual_mulligan.png")
+    plt.show()
+
 def player_strength_regression(directory_replays='.', directory_games='.'):
     """
     Reads CSV files, zips together play and replay data, then 
@@ -253,9 +301,10 @@ def player_strength_regression(directory_replays='.', directory_games='.'):
                 # Calculate weighted average mulligan rate for this group
                 avg_mull_rate = np.average(subset['mulligan_rate'].values, weights=weights)
                 
-                # Calculate predicted mulligan rate at 75% winrate
-                predicted_75 = reg.predict([[0.75]])[0]
-                diff_from_avg = predicted_75 - avg_mull_rate
+                # Calculate predicted mulligan rate at 70% winrate
+                predicted_70 = reg.predict([[0.7]])[0]
+                print(on_play, lands, avg_mull_rate, predicted_70)
+                diff_from_avg = predicted_70 - avg_mull_rate
                 
                 regression_results.append({
                     'on_play': on_play,
@@ -265,7 +314,7 @@ def player_strength_regression(directory_replays='.', directory_games='.'):
                     'intercept': intercept,
                     'r_squared': r_squared,
                     'avg_mull_rate': avg_mull_rate,
-                    'predicted_75': predicted_75,
+                    'predicted_70': predicted_70,
                     'diff_from_avg': diff_from_avg,
                     'n_points': len(subset)
                 })
@@ -281,7 +330,7 @@ def player_strength_regression(directory_replays='.', directory_games='.'):
     for on_play in [0, 1]:
         subset = regression_df[regression_df['on_play'] == on_play]
         label = 'On Play' if on_play == 1 else 'On Draw'
-        color = 'blue' if on_play == 1 else 'red'
+        color = '#377eb8' if on_play == 1 else '#ff7f00'
         ax1.plot(subset['lands'], subset['slope'], marker='o', label=label, color=color, linewidth=2, markersize=8)
     
     ax1.set_xlabel('Number of Lands in Opening Hand')
@@ -301,7 +350,7 @@ def player_strength_regression(directory_replays='.', directory_games='.'):
     for on_play in [0, 1]:
         subset = regression_df[regression_df['on_play'] == on_play]
         label = 'On Play' if on_play == 1 else 'On Draw'
-        color = 'blue' if on_play == 1 else 'red'
+        color = '#377eb8' if on_play == 1 else '#ff7f00'
         ax1.plot(subset['lands'], subset['slope']/subset['avg_mull_rate'], marker='o', label=label, color=color, linewidth=2, markersize=8)
     
     ax1.set_xlabel('Number of Lands in Opening Hand')
@@ -359,7 +408,7 @@ def player_strength_regression(directory_replays='.', directory_games='.'):
                 ]
                 
                 # Plot scatter points with size based on number of games
-                color = 'blue' if on_play == 1 else 'red'
+                color = '#377eb8' if on_play == 1 else '#ff7f00'
                 label_play = 'On Play' if on_play == 1 else 'On Draw'
                 # Scale circle size based on number of games (min 20, max 200)
                 if len(subset_data) > 0:
@@ -378,7 +427,6 @@ def player_strength_regression(directory_replays='.', directory_games='.'):
                         slope = reg_result['slope'].iloc[0]
                         intercept = reg_result['intercept'].iloc[0]
                         r_squared = reg_result['r_squared'].iloc[0]
-                        
                         # Create regression line
                         x_range = np.linspace(subset_data['user_game_win_rate_bucket'].min(), 
                                             subset_data['user_game_win_rate_bucket'].max(), 100)
@@ -400,12 +448,14 @@ def player_strength_regression(directory_replays='.', directory_games='.'):
     plt.tight_layout()
     plt.savefig("four_regressions.png")
     plt.show()
+    
+    
 
     return regression_df
 
 
 # --- Execution ---
 if __name__ == '__main__':
-    player_strength_regression(directory_replays='./trad_replays/', directory_games='./trad_games') 
-    
+    results = player_strength_regression(directory_replays='./trad_replays/', directory_games='./trad_games') 
+    plot_ideal_vs_actual_mulligan(results)
     

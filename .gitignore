@@ -1,4 +1,7 @@
 b01_replays/
 trad_replays/
+trad_games/
+other/
 *.gz
 *.zip
+*.png
