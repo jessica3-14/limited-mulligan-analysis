@@ -72,7 +72,7 @@ def calculate_set_win_rate(directory='.'):
 
 
     #mh3 excluded for mdfcs
-    set_names = ['eoe', 'eos', 'tdm','dft','mh3', 'fdn','blb','otj','otp','big','ktk','woe','wot','sir','sis','dmu','fin','fca','dsk','mkm','lci','ltr','mom']
+    set_names = ['eoe', 'tdm','dft', 'fdn','blb','otj','ktk','woe','sir','dmu','fin','dsk','mkm','lci','ltr','mom']
 
     
 
@@ -186,6 +186,7 @@ def calculate_set_win_rate(directory='.'):
     total_play_mullrate = len(df[(df['num_mulligans'] > 0) & (df['on_play']==1)])/len(df[df['on_play']==1])
     print('Total mullrate on draw: '+str(total_draw_mullrate))
     print('Total mullrate on play: '+str(total_play_mullrate))
+
     
     print(f"play draw mull winrate: {play_draw_mull_winrate}")
     print(f"play draw keep winrate: {total_keep_winrate}")
@@ -287,6 +288,52 @@ def calculate_set_win_rate(directory='.'):
     columns="on_play",
     values=["mean", "stddev"]
     )
+
+   
+    keep_mull = (df.groupby([df["num_mulligans"]>0,df["opp_num_mulligans"]>0,"on_play"])["won"].mean().reset_index())
+    print(keep_mull)
+    #keep_mull["won"]*=rescaling_wr
+    #print("Rescaled wrs")
+    #print(keep_mull)
+
+    play_df = df[df["on_play"] == 1]
+
+    play_result = (
+    play_df.assign(
+        player_mulligan = play_df["num_mulligans"] > 0,
+        opp_mulligan = play_df["opp_num_mulligans"] > 0
+    )
+    .groupby("player_mulligan")["opp_mulligan"]
+    .mean()
+    .rename("percent_opp_mulligan")
+    .reset_index()
+)
+
+    print(play_result)
+
+    
+
+    draw_df = df[df["on_play"]==0]
+    draw_result = (
+    draw_df.assign(
+        player_mulligan = draw_df["num_mulligans"] > 0,
+        opp_mulligan = draw_df["opp_num_mulligans"] > 0
+    )
+    .groupby("opp_mulligan")["player_mulligan"]
+    .mean()
+    .rename("percent_player_mulligan")
+    .reset_index()
+)
+
+    print(draw_result)
+
+ 
+
+    opp_draw_mullrate = len(df[(df['opp_num_mulligans'] > 0) & (df['on_play']==1)])/len(df[df['on_play']==1])
+    opp_play_mullrate = len(df[(df['opp_num_mulligans'] > 0) & (df['on_play']==0)])/len(df[df['on_play']==0])
+    print('Opp total mullrate on draw: '+str(opp_draw_mullrate))
+    print('Opp total mullrate on play: '+str(opp_play_mullrate))
+    
 
     print(f"table: {table}")
 
